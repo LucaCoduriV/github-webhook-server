@@ -121,7 +121,7 @@ fn update_git_repo(repo:&Repo) -> Result<(), io::Error> {
     run_command("git fetch", vec!["--all"], location)?;
     run_command("git branch", vec![backup_branch.as_str()], location)?;
     run_command("git checkout", vec![backup_branch.as_str()], location)?;
-    run_command("git reset", vec![format!("--hard origin/{}", backup_branch.as_str())], location)?;
+    run_command("git reset", vec![format!("--hard {}", branch)], location)?;
     run_command("git checkout", vec![branch], location)?;
     run_command("git reset", vec![format!("--hard origin/{}", branch)], location)?;
     Ok(())
