@@ -68,7 +68,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     });
 
     let Some(repo) = maybe_repo else {
-        println!("REPO NOT IN CONFIG FILE");
+        eprintln!("REPO NOT IN CONFIG FILE");
         return (StatusCode::NOT_MODIFIED, "repo is not in config file").into_response();
     };
 
@@ -76,12 +76,12 @@ async fn hook(header: HeaderMap, body: String) -> Response {
 
     if let Some(encoded_secret) = header.get("X-Hub-Signature-256") {
         let Some(secret) = &repo.secret else {
-            println!("SECRET IS MISSING");
+            eprintln!("SECRET IS MISSING");
             return (StatusCode::BAD_REQUEST, "NO SECRET SPECIFIED").into_response();
         };
 
         if !check_signature(secret, encoded_secret.to_str().unwrap(), &body) {
-            println!("WRONG SECRET");
+            eprintln!("WRONG SECRET");
             return (StatusCode::BAD_REQUEST, "WRONG SECRET").into_response();
         }
     }
@@ -95,20 +95,25 @@ async fn hook(header: HeaderMap, body: String) -> Response {
 
     let git_result = update_git_repo(&repo);
     if git_result.is_err() {
-        println!("ERROR WITH GIT: {:?}", git_result.unwrap_err());
+        eprintln!("ERROR WITH GIT: {:?}", git_result.unwrap_err());
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't update git repo").into_response();
     }
 
-    let Ok(output) = run_command(
-        repo.command.as_ref().unwrap(),
-        &repo.args,
-        &repo.working_directory)
-        else {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
-        };
+    // If there is a command to run
+    if repo.command.is_some() {
+        let Ok(output) = run_command(
+            repo.command.as_ref().unwrap(),
+            &repo.args,
+            &repo.working_directory)
+            else {
+                eprintln!("COULDN'T RUN THE COMMAND");
+                return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
+            };
+        println!("COMMAND OUTPUT: {:#?}", output);
+    }
 
-    println!("{:?}", output);
-    repo.repo.as_str().into_response()
+
+    StatusCode::OK.into_response()
 }
 
 fn run_command<I, S>(command: &str, args: I, curr_dir: &str) -> io::Result<Output>
