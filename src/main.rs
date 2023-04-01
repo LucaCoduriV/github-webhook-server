@@ -59,7 +59,13 @@ async fn hook(header: HeaderMap, body: String) -> Response {
         .get("full_name").unwrap()
         .as_str().unwrap();
 
-    let maybe_repo = USER_CONFIG.repos.iter().find(|repo| repo.repo == repo_full_name);
+    let maybe_repo = USER_CONFIG.repos.iter().find(|repo| {
+        return if repo.events.is_empty(){
+             repo.repo == repo_full_name
+        }else{
+            repo.repo == repo_full_name && repo.events.contains(&event)
+        }
+    });
 
     let Some(repo) = maybe_repo else {
         println!("REPO NOT IN CONFIG FILE");
