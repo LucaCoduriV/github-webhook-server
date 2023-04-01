@@ -1,0 +1,19 @@
+port = 3003
+
+[[repos]]
+repo = "LucaCoduriV/rust-webhook-server"
+working_directory = "."
+command = "./testscript.ps1"
+args = ["test"]
+repo_directory = "."
+secret = "1234"
+events = ["delete"]
+branch = "main"
+
+[[repos]]
+repo = "2"
+location = "."
+
+[[repos]]
+repo = "3"
+location = "."
