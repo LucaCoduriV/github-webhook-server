@@ -93,9 +93,13 @@ async fn hook(header: HeaderMap, body: String) -> Response {
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't update git repo").into_response();
     }
 
-    let Ok(output) = run_command(repo.command.as_ref().unwrap(), &repo.args, ".") else {
-        return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
-    };
+    let Ok(output) = run_command(
+        repo.command.as_ref().unwrap(),
+        &repo.args,
+        &repo.working_directory)
+        else {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
+        };
 
     println!("{:?}", output);
     repo.repo.as_str().into_response()
@@ -114,7 +118,7 @@ fn run_command<I, S>(command: &str, args: I, curr_dir: &str) -> io::Result<Outpu
         .output()
 }
 
-fn update_git_repo(repo:&Repo) -> Result<(), io::Error> {
+fn update_git_repo(repo: &Repo) -> Result<(), io::Error> {
     let location = &repo.repo_directory;
     let branch = &repo.branch;
     let backup_branch = format!("backup-{}", branch);

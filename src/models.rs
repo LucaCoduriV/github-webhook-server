@@ -11,6 +11,8 @@ pub struct Repo {
     #[serde(default = "Vec::default")]
     pub events:Vec<GithubEventTypes>,
     pub repo_directory:String,
+    #[serde(default = "default_working_directory")]
+    pub working_directory:String,
     #[serde(default = "default_branch")]
     pub branch:String,
 }
@@ -22,5 +24,9 @@ pub struct Config {
 }
 
 fn default_branch() -> String{
+    "main".to_string()
+}
+
+fn default_working_directory() -> String{
     "main".to_string()
 }

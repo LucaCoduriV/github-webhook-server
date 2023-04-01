@@ -2,13 +2,13 @@ port = 3003
 
 [[repos]]
 repo = "LucaCoduriV/rust-webhook-server"
+secret = "1234"
+branch = "main"
+repo_directory = "."
 working_directory = "."
 command = "./testscript.ps1"
 args = ["test"]
-repo_directory = "."
-secret = "1234"
 events = ["push"]
-branch = "main"
 
 [[repos]]
 repo = "2"
