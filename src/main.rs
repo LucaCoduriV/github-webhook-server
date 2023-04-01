@@ -62,6 +62,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     let maybe_repo = USER_CONFIG.repos.iter().find(|repo| repo.repo == repo_full_name);
 
     let Some(repo) = maybe_repo else {
+        println!("REPO NOT IN CONFIG FILE");
         return (StatusCode::NOT_MODIFIED, "repo is not in config file").into_response();
     };
 
@@ -69,23 +70,26 @@ async fn hook(header: HeaderMap, body: String) -> Response {
 
     if let Some(encoded_secret) = header.get("X-Hub-Signature-256") {
         let Some(secret) = &repo.secret else {
+            println!("SECRET IS MISSING");
             return (StatusCode::BAD_REQUEST, "NO SECRET SPECIFIED").into_response();
         };
 
         if !check_signature(secret, encoded_secret.to_str().unwrap(), &body) {
+            println!("WRONG SECRET");
             return (StatusCode::BAD_REQUEST, "WRONG SECRET").into_response();
         }
     }
 
     if !repo.events.is_empty() {
         if !repo.events.contains(&event) {
+            println!("NOTHING TO DO WITH THIS EVENT: {:?}", event);
             return (StatusCode::NOT_MODIFIED, "Nothing to do for this event").into_response();
         }
     }
 
     let git_result = update_git_repo(&repo);
     if git_result.is_err() {
-        println!("{:?}", git_result.unwrap_err());
+        println!("ERROR WITH GIT: {:?}", git_result.unwrap_err());
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't update git repo").into_response();
     }
 
