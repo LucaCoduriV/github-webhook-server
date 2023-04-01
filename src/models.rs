@@ -17,7 +17,8 @@ pub struct Repo {
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    pub repos: Vec<Repo>
+    pub repos: Vec<Repo>,
+    pub port: u16,
 }
 
 fn default_branch() -> String{
