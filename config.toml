@@ -13,7 +13,9 @@ branch = "main"
 [[repos]]
 repo = "2"
 location = "."
+repo_directory = "."
 
 [[repos]]
 repo = "3"
 location = "."
+repo_directory = "."

@@ -28,7 +28,7 @@ static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
 
 #[tokio::main]
 async fn main() {
-    println!("{:?}", USER_CONFIG.repos[0].location);
+    println!("{:?}", USER_CONFIG.repos[0].repo_directory);
 
     // build our application with a route
     let app = Router::new()
@@ -83,6 +83,8 @@ async fn hook(header: HeaderMap, body: String) -> Response {
             return (StatusCode::NOT_MODIFIED, "Nothing to do for this event").into_response();
         }
     }
+
+    update_git_repo(&repo);
 
     let Ok(output) = run_command(repo.command.as_ref().unwrap(), &repo.args, ".") else {
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
