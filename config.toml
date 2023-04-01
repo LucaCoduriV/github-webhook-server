@@ -7,7 +7,7 @@ command = "./testscript.ps1"
 args = ["test"]
 repo_directory = "."
 secret = "1234"
-events = ["delete"]
+events = ["push"]
 branch = "main"
 
 [[repos]]
