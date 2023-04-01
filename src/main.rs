@@ -95,6 +95,8 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     if git_result.is_err() {
         eprintln!("[{}][{}]ERROR WITH GIT: {:?}",repo.repo, event, git_result.unwrap_err());
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't update git repo").into_response();
+    }else{
+        println!("[{}][{}]GIT OUTPUT: {:#?}", repo.repo, event, git_result.unwrap());
     }
 
     // If there is a command to run
