@@ -117,8 +117,12 @@ fn run_command<I, S>(command: &str, args: I, curr_dir: &str) -> io::Result<Outpu
 fn update_git_repo(repo:&Repo) -> Result<(), io::Error> {
     let location = &repo.repo_directory;
     let branch = &repo.branch;
+    let backup_branch = format!("backup-{}", branch);
     run_command("git fetch", vec!["--all"], location)?;
-    run_command("git branch", vec![format!("backup-{}", branch)], location)?;
+    run_command("git branch", vec![backup_branch.as_str()], location)?;
+    run_command("git checkout", vec![backup_branch.as_str()], location)?;
+    run_command("git reset", vec![format!("--hard origin/{}", backup_branch.as_str())], location)?;
+    run_command("git checkout", vec![branch], location)?;
     run_command("git reset", vec![format!("--hard origin/{}", branch)], location)?;
     Ok(())
 }
