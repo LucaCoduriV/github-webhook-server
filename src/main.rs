@@ -1,7 +1,6 @@
 mod dto;
 mod models;
 
-use std::env::args;
 use std::ffi::OsStr;
 use std::io;
 use axum::{
@@ -84,7 +83,11 @@ async fn hook(header: HeaderMap, body: String) -> Response {
         }
     }
 
-    update_git_repo(&repo);
+    let git_result = update_git_repo(&repo);
+    if git_result.is_err() {
+        println!("{:?}", git_result.unwrap_err());
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't update git repo").into_response();
+    }
 
     let Ok(output) = run_command(repo.command.as_ref().unwrap(), &repo.args, ".") else {
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
@@ -107,12 +110,12 @@ fn run_command<I, S>(command: &str, args: I, curr_dir: &str) -> io::Result<Outpu
         .output()
 }
 
-fn update_git_repo(repo:&Repo) -> Result<(), ()> {
+fn update_git_repo(repo:&Repo) -> Result<(), io::Error> {
     let location = &repo.repo_directory;
     let branch = &repo.branch;
-    run_command("git fetch", vec!["--all"], location).map_err(|_|())?;
-    run_command("git branch", vec![format!("backup-{}", branch)], location).map_err(|_|())?;
-    run_command("git reset", vec![format!("--hard origin/{}", branch)], location).map_err(|_|())?;
+    run_command("git fetch", vec!["--all"], location)?;
+    run_command("git branch", vec![format!("backup-{}", branch)], location)?;
+    run_command("git reset", vec![format!("--hard origin/{}", branch)], location)?;
     Ok(())
 }
 
