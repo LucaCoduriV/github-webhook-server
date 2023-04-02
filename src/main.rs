@@ -1,6 +1,8 @@
 mod dto;
 mod models;
+mod cli;
 
+use std::cell::RefCell;
 use std::ffi::OsStr;
 use std::io;
 use axum::{
@@ -18,6 +20,8 @@ use hmac::{Hmac, Mac};
 use once_cell::sync::Lazy;
 use crate::models::{Config, Repo};
 use std::process::{Command, Output};
+use std::sync::Arc;
+use clap::Parser;
 use log::{error, info, warn};
 use pretty_env_logger::env_logger::Env;
 
@@ -27,10 +31,13 @@ static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
     toml::from_str(&config_str).expect("Wrong config format")
 });
 
+
 #[tokio::main]
 async fn main() {
     std::env::set_var("RUST_LOG", "info");
     pretty_env_logger::init();
+
+    let args = cli::Args::parse();
 
     // build our application with a route
     let app = Router::new()
