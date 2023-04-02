@@ -7,8 +7,8 @@ secret = "1234"
 branch = "main"
 repo_directory = "."
 working_directory = "."
-command = "./testscript.ps1"
-args = ["test"]
+command = "powershell"
+args = ["./testscript.ps1"]
 events = ["push"]
 
 [[repos]]

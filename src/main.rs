@@ -101,41 +101,20 @@ async fn hook(header: HeaderMap, body: String) -> Response {
 
     // If there is a command to run
     if repo.command.is_some() {
-        let Ok(output) = run_command(
-            repo.command.as_ref().unwrap(),
-            &repo.args,
-            &repo.working_directory)
+        let Ok(output) = Command::new(repo.command.as_ref().unwrap())
+            .current_dir(&repo.working_directory)
+            .args(&repo.args)
+            .output()
             else {
                 eprintln!("[{}][{}]COULDN'T RUN THE COMMAND", repo.repo, event);
                 return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
             };
-        println!("[{}][{}]COMMAND OUTPUT: {:#?}", repo.repo, event, output);
+        println!("[{}][{}]COMMAND OUTPUT: {}", repo.repo, event,
+                 String::from_utf8(output.stdout).unwrap());
     }
 
 
     StatusCode::OK.into_response()
-}
-
-fn run_command<I, S>(command: &str, args: I, curr_dir: &str) -> io::Result<Output>
-    where I: IntoIterator<Item=S>,
-          S: AsRef<OsStr>, {
-
-    let output = if cfg!(target_os = "windows") {
-        Command::new("powershell")
-            .current_dir(curr_dir)
-            .arg(command)
-            .args(args)
-            .output()?
-    } else {
-        Command::new("sh")
-            .current_dir(curr_dir)
-            .arg("-c")
-            .arg(command)
-            .args(args)
-            .output()?
-    };
-
-    Ok(output)
 }
 
 fn git_fetch_all(repo_directory:&str) -> Result<Output, io::Error> {
@@ -170,11 +149,11 @@ fn update_git_repo(repo: &Repo) -> Result<(), io::Error> {
 
     // update
     let output = git_fetch_all(location)?;
-    println!("GIT FETCH ALL: {:#?}", String::from_utf8(output.stdout));
+    println!("GIT FETCH ALL: {}", String::from_utf8(output.stdout).unwrap());
     // let output = run_command("git branch", vec![backup_branch.as_str()], location)?;
     // println!("{}", String::from_utf8(output.stdout).unwrap());
     let output = git_reset(branch, location)?;
-    println!("GIT RESET: {:#?}", String::from_utf8(output.stdout));
+    println!("GIT RESET: {}", String::from_utf8(output.stdout).unwrap());
     Ok(())
 }
 
