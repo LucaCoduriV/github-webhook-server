@@ -1,4 +1,5 @@
 port = 3003
+git_directory = "C:\\Program Files\\Git\\cmd"
 
 [[repos]]
 repo = "LucaCoduriV/rust-webhook-server"

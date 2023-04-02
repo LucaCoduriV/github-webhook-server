@@ -119,30 +119,62 @@ async fn hook(header: HeaderMap, body: String) -> Response {
 fn run_command<I, S>(command: &str, args: I, curr_dir: &str) -> io::Result<Output>
     where I: IntoIterator<Item=S>,
           S: AsRef<OsStr>, {
-    let program = if cfg!(target_os = "windows") {
-        "powershell"
+
+    let output = if cfg!(target_os = "windows") {
+        Command::new("powershell")
+            .current_dir(curr_dir)
+            .arg(command)
+            .args(args)
+            .output()?
     } else {
-        "sh"
+        Command::new("sh")
+            .current_dir(curr_dir)
+            .arg("-c")
+            .arg(command)
+            .args(args)
+            .output()?
     };
 
-    Command::new(program).current_dir(curr_dir).arg(command).args(args)
+    Ok(output)
+}
+
+fn git_fetch_all(repo_directory:&str) -> Result<Output, io::Error> {
+    Command::new(&USER_CONFIG.git_directory)
+        .arg("fetch")
+        .arg("--all")
+        .current_dir(repo_directory)
+        .output()
+}
+
+fn git_reset(branch:&str, repo_directory:&str) -> Result<Output, io::Error> {
+    Command::new(&USER_CONFIG.git_directory)
+        .arg("reset")
+        .arg("--hard")
+        .arg(format!("origin/{}", branch))
+        .current_dir(repo_directory)
         .output()
 }
 
 fn update_git_repo(repo: &Repo) -> Result<(), io::Error> {
     let location = &repo.repo_directory;
     let branch = &repo.branch;
-    let backup_branch = format!("backup-{}", branch);
+    // let backup_branch = format!("backup-{}", branch);
 
     // backup
-    run_command("git checkout", vec![backup_branch.as_str()], location)?;
-    run_command("git reset", vec![format!("--hard {}", branch)], location)?;
-    run_command("git checkout", vec![branch], location)?;
+    // let output = run_command("git checkout", vec![backup_branch.as_str()], location)?;
+    // println!("{}", String::from_utf8(output.stdout).unwrap());
+    // let output = run_command("git reset", vec![format!("--hard {}", branch)], location)?;
+    // println!("{}", String::from_utf8(output.stdout).unwrap());
+    // let output = run_command("git checkout", vec![branch], location)?;
+    // println!("{}", String::from_utf8(output.stdout).unwrap());
 
     // update
-    run_command("git fetch", vec!["--all"], location)?;
-    run_command("git branch", vec![backup_branch.as_str()], location)?;
-    run_command("git reset", vec![format!("--hard origin/{}", branch)], location)?;
+    let output = git_fetch_all(location)?;
+    println!("GIT FETCH ALL: {:#?}", String::from_utf8(output.stdout));
+    // let output = run_command("git branch", vec![backup_branch.as_str()], location)?;
+    // println!("{}", String::from_utf8(output.stdout).unwrap());
+    let output = git_reset(branch, location)?;
+    println!("GIT RESET: {:#?}", String::from_utf8(output.stdout));
     Ok(())
 }
 
