@@ -2,14 +2,12 @@ mod dto;
 mod models;
 mod cli;
 
-use std::cell::RefCell;
-use std::ffi::OsStr;
 use std::io;
 use axum::{
     routing::{get, post},
     http::StatusCode,
     response::IntoResponse,
-    Json, Router,
+    Router,
 };
 use std::net::SocketAddr;
 use axum::http::HeaderMap;
@@ -17,13 +15,11 @@ use axum::response::Response;
 use crate::dto::GithubEventTypes;
 use sha2::Sha256;
 use hmac::{Hmac, Mac};
-use once_cell::sync::{Lazy, OnceCell};
+use once_cell::sync::{OnceCell};
 use crate::models::{Config, Repo};
 use std::process::{Command, Output};
-use std::sync::Arc;
 use clap::Parser;
 use log::{error, info, warn};
-use pretty_env_logger::env_logger::Env;
 
 
 // static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
@@ -31,7 +27,7 @@ use pretty_env_logger::env_logger::Env;
 //     toml::from_str(&config_str).expect("Wrong config format")
 // });
 
-static USER_CONFIG:OnceCell<Config> = OnceCell::new();
+static USER_CONFIG: OnceCell<Config> = OnceCell::new();
 
 
 #[tokio::main]
@@ -42,7 +38,8 @@ async fn main() {
     let args = cli::Args::parse();
 
     let config_str = std::fs::read_to_string(args.config).expect("No configuration file found");
-    USER_CONFIG.set(toml::from_str(&config_str).expect("Wrong config format"))
+    USER_CONFIG.set(toml::from_str(&config_str)
+        .expect("Wrong config format or missing required configurations"))
         .expect("OnceCell error");
 
     // build our application with a route
@@ -76,11 +73,11 @@ async fn hook(header: HeaderMap, body: String) -> Response {
         .as_str().unwrap();
 
     let maybe_repo = USER_CONFIG.get().unwrap().repos.iter().find(|repo| {
-        return if repo.events.is_empty(){
-             repo.repo == repo_full_name
-        }else{
+        return if repo.events.is_empty() {
+            repo.repo == repo_full_name
+        } else {
             repo.repo == repo_full_name && repo.events.contains(&event)
-        }
+        };
     });
 
     let Some(repo) = maybe_repo else {
@@ -111,7 +108,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     if git_result.is_err() {
         error!("[{}][{}]ERROR WITH GIT: {:?}",repo.repo, event, git_result.unwrap_err());
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't update git repo").into_response();
-    }else{
+    } else {
         info!("[{}][{}]GIT OUTPUT: {:#?}", repo.repo, event, git_result.unwrap());
     }
 
@@ -133,7 +130,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     StatusCode::OK.into_response()
 }
 
-fn git_fetch_all(repo_directory:&str) -> Result<Output, io::Error> {
+fn git_fetch_all(repo_directory: &str) -> Result<Output, io::Error> {
     Command::new(&USER_CONFIG.get().unwrap().git)
         .arg("fetch")
         .arg("--all")
@@ -141,7 +138,7 @@ fn git_fetch_all(repo_directory:&str) -> Result<Output, io::Error> {
         .output()
 }
 
-fn git_reset(branch:&str, repo_directory:&str) -> Result<Output, io::Error> {
+fn git_reset(branch: &str, repo_directory: &str) -> Result<Output, io::Error> {
     Command::new(&USER_CONFIG.get().unwrap().git)
         .arg("reset")
         .arg("--hard")
