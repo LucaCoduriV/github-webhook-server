@@ -17,7 +17,7 @@ use axum::response::Response;
 use crate::dto::GithubEventTypes;
 use sha2::Sha256;
 use hmac::{Hmac, Mac};
-use once_cell::sync::Lazy;
+use once_cell::sync::{Lazy, OnceCell};
 use crate::models::{Config, Repo};
 use std::process::{Command, Output};
 use std::sync::Arc;
@@ -26,10 +26,12 @@ use log::{error, info, warn};
 use pretty_env_logger::env_logger::Env;
 
 
-static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
-    let config_str = std::fs::read_to_string("./config.toml").expect("No configuration file found");
-    toml::from_str(&config_str).expect("Wrong config format")
-});
+// static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
+//     let config_str = std::fs::read_to_string("./config.toml").expect("No configuration file found");
+//     toml::from_str(&config_str).expect("Wrong config format")
+// });
+
+static USER_CONFIG:OnceCell<Config> = OnceCell::new();
 
 
 #[tokio::main]
@@ -39,6 +41,10 @@ async fn main() {
 
     let args = cli::Args::parse();
 
+    let config_str = std::fs::read_to_string(args.config).expect("No configuration file found");
+    USER_CONFIG.set(toml::from_str(&config_str).expect("Wrong config format"))
+        .expect("OnceCell error");
+
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
@@ -47,7 +53,7 @@ async fn main() {
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
-    let addr = SocketAddr::from(([0, 0, 0, 0], USER_CONFIG.port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], USER_CONFIG.get().unwrap().port));
     info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -69,7 +75,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
         .get("full_name").unwrap()
         .as_str().unwrap();
 
-    let maybe_repo = USER_CONFIG.repos.iter().find(|repo| {
+    let maybe_repo = USER_CONFIG.get().unwrap().repos.iter().find(|repo| {
         return if repo.events.is_empty(){
              repo.repo == repo_full_name
         }else{
@@ -128,7 +134,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
 }
 
 fn git_fetch_all(repo_directory:&str) -> Result<Output, io::Error> {
-    Command::new(&USER_CONFIG.git_directory)
+    Command::new(&USER_CONFIG.get().unwrap().git_directory)
         .arg("fetch")
         .arg("--all")
         .current_dir(repo_directory)
@@ -136,7 +142,7 @@ fn git_fetch_all(repo_directory:&str) -> Result<Output, io::Error> {
 }
 
 fn git_reset(branch:&str, repo_directory:&str) -> Result<Output, io::Error> {
-    Command::new(&USER_CONFIG.git_directory)
+    Command::new(&USER_CONFIG.get().unwrap().git_directory)
         .arg("reset")
         .arg("--hard")
         .arg(format!("origin/{}", branch))
