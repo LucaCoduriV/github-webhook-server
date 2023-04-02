@@ -134,7 +134,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
 }
 
 fn git_fetch_all(repo_directory:&str) -> Result<Output, io::Error> {
-    Command::new(&USER_CONFIG.get().unwrap().git_directory)
+    Command::new(&USER_CONFIG.get().unwrap().git)
         .arg("fetch")
         .arg("--all")
         .current_dir(repo_directory)
@@ -142,7 +142,7 @@ fn git_fetch_all(repo_directory:&str) -> Result<Output, io::Error> {
 }
 
 fn git_reset(branch:&str, repo_directory:&str) -> Result<Output, io::Error> {
-    Command::new(&USER_CONFIG.get().unwrap().git_directory)
+    Command::new(&USER_CONFIG.get().unwrap().git)
         .arg("reset")
         .arg("--hard")
         .arg(format!("origin/{}", branch))

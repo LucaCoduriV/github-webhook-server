@@ -22,7 +22,7 @@ pub struct Config {
     pub repos: Vec<Repo>,
     pub port: u16,
     #[serde(default = "default_git_directory")]
-    pub git_directory: String,
+    pub git: String,
 }
 
 fn default_branch() -> String{
@@ -38,5 +38,5 @@ fn default_git_directory() -> String{
 }
 
 fn default_working_directory() -> String{
-    "main".to_string()
+    ".".to_string()
 }
