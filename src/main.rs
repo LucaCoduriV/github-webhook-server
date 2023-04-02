@@ -29,7 +29,7 @@ static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
 
 #[tokio::main]
 async fn main() {
-    std::env::set_var("RUST_LOG", "warn,trace,info,debug,error");
+    std::env::set_var("RUST_LOG", "info");
     pretty_env_logger::init();
 
     // build our application with a route
