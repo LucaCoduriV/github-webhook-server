@@ -30,7 +30,11 @@ fn default_branch() -> String{
 }
 
 fn default_git_directory() -> String{
-    "/usr/bin/git".to_string()
+    if cfg!(target_os = "windows") {
+        "C:\\Program Files\\Git\\cmd\\git.exe".to_string()
+    }else {
+        "/usr/bin/git".to_string()
+    }
 }
 
 fn default_working_directory() -> String{
