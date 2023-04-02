@@ -18,6 +18,8 @@ use hmac::{Hmac, Mac};
 use once_cell::sync::Lazy;
 use crate::models::{Config, Repo};
 use std::process::{Command, Output};
+use log::{error, info, warn};
+use pretty_env_logger::env_logger::Env;
 
 
 static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
@@ -27,7 +29,8 @@ static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
 
 #[tokio::main]
 async fn main() {
-    println!("{:?}", USER_CONFIG.repos[0].repo_directory);
+    std::env::set_var("RUST_LOG", "warn,trace,info,debug,error");
+    pretty_env_logger::init();
 
     // build our application with a route
     let app = Router::new()
@@ -38,7 +41,7 @@ async fn main() {
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
     let addr = SocketAddr::from(([0, 0, 0, 0], USER_CONFIG.port));
-    println!("listening on {}", addr);
+    info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
@@ -68,35 +71,35 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     });
 
     let Some(repo) = maybe_repo else {
-        eprintln!("REPO {} NOT IN CONFIG FILE FOR {}", repo_full_name, event);
+        warn!("REPO {} NOT IN CONFIG FILE FOR {}", repo_full_name, event);
         return (StatusCode::NOT_MODIFIED, "repo is not in config file").into_response();
     };
 
     if let Some(encoded_secret) = header.get("X-Hub-Signature-256") {
         let Some(secret) = &repo.secret else {
-            eprintln!("[{}][{}]SECRET IS MISSING", repo.repo, event);
+            error!("[{}][{}]SECRET IS MISSING", repo.repo, event);
             return (StatusCode::BAD_REQUEST, "NO SECRET SPECIFIED").into_response();
         };
 
         if !check_signature(secret, encoded_secret.to_str().unwrap(), &body) {
-            eprintln!("WRONG SECRET");
+            error!("WRONG SECRET");
             return (StatusCode::BAD_REQUEST, "WRONG SECRET").into_response();
         }
     }
 
     if !repo.events.is_empty() {
         if !repo.events.contains(&event) {
-            println!("[{}][{}]NOTHING TO DO WITH THIS EVENT", repo.repo, event);
+            warn!("[{}][{}]NOTHING TO DO WITH THIS EVENT", repo.repo, event);
             return (StatusCode::NOT_MODIFIED, "Nothing to do for this event").into_response();
         }
     }
 
     let git_result = update_git_repo(&repo);
     if git_result.is_err() {
-        eprintln!("[{}][{}]ERROR WITH GIT: {:?}",repo.repo, event, git_result.unwrap_err());
+        error!("[{}][{}]ERROR WITH GIT: {:?}",repo.repo, event, git_result.unwrap_err());
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't update git repo").into_response();
     }else{
-        println!("[{}][{}]GIT OUTPUT: {:#?}", repo.repo, event, git_result.unwrap());
+        info!("[{}][{}]GIT OUTPUT: {:#?}", repo.repo, event, git_result.unwrap());
     }
 
     // If there is a command to run
@@ -109,7 +112,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
                 eprintln!("[{}][{}]COULDN'T RUN THE COMMAND", repo.repo, event);
                 return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
             };
-        println!("[{}][{}]COMMAND OUTPUT: {}", repo.repo, event,
+        info!("[{}][{}]COMMAND OUTPUT: {}", repo.repo, event,
                  String::from_utf8(output.stdout).unwrap());
     }
 
@@ -149,11 +152,11 @@ fn update_git_repo(repo: &Repo) -> Result<(), io::Error> {
 
     // update
     let output = git_fetch_all(location)?;
-    println!("GIT FETCH ALL: {}", String::from_utf8(output.stdout).unwrap());
+    info!("GIT FETCH ALL: {}", String::from_utf8(output.stdout).unwrap());
     // let output = run_command("git branch", vec![backup_branch.as_str()], location)?;
     // println!("{}", String::from_utf8(output.stdout).unwrap());
     let output = git_reset(branch, location)?;
-    println!("GIT RESET: {}", String::from_utf8(output.stdout).unwrap());
+    info!("GIT RESET: {}", String::from_utf8(output.stdout).unwrap());
     Ok(())
 }
 
