@@ -111,11 +111,9 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     }
 
 
-
     // If there is a command to run
     if repo.command.is_some() {
-
-        thread::spawn(move ||{
+        thread::spawn(move || {
             let Ok(output) = Command::new(repo.command.as_ref().unwrap())
                 .current_dir(&repo.working_directory)
                 .args(&repo.args)
@@ -127,7 +125,6 @@ async fn hook(header: HeaderMap, body: String) -> Response {
             info!("[{}][{}]COMMAND OUTPUT: {}", repo.repo, event,
                  String::from_utf8(output.stdout).unwrap());
         });
-
     }
 
 
@@ -156,7 +153,7 @@ fn update_git_repo(repo: &Repo, event: &GithubEventTypes) -> Result<(), io::Erro
     let branch = &repo.branch;
 
     let output = git_fetch_all(location)?;
-    info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, 
+    info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event,
         String::from_utf8(output.stdout).unwrap());
     let output = git_reset(branch, location)?;
     info!("[{}][{}]GIT RESET: {}", repo.repo, event, String::from_utf8(output.stdout).unwrap());
