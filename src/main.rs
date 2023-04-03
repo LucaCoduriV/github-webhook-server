@@ -2,7 +2,7 @@ mod dto;
 mod models;
 mod cli;
 
-use std::io;
+use std::{io, thread};
 use axum::{
     routing::{get, post},
     http::StatusCode,
@@ -112,18 +112,24 @@ async fn hook(header: HeaderMap, body: String) -> Response {
         info!("[{}][{}]GIT OUTPUT: {:#?}", repo.repo, event, git_result.unwrap());
     }
 
+
+
     // If there is a command to run
     if repo.command.is_some() {
-        let Ok(output) = Command::new(repo.command.as_ref().unwrap())
-            .current_dir(&repo.working_directory)
-            .args(&repo.args)
-            .output()
-            else {
-                eprintln!("[{}][{}]COULDN'T RUN THE COMMAND", repo.repo, event);
-                return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't run the commands").into_response();
-            };
-        info!("[{}][{}]COMMAND OUTPUT: {}", repo.repo, event,
+
+        thread::spawn(move ||{
+            let Ok(output) = Command::new(repo.command.as_ref().unwrap())
+                .current_dir(&repo.working_directory)
+                .args(&repo.args)
+                .output()
+                else {
+                    eprintln!("[{}][{}]COULDN'T RUN THE COMMAND", repo.repo, event);
+                    return;
+                };
+            info!("[{}][{}]COMMAND OUTPUT: {}", repo.repo, event,
                  String::from_utf8(output.stdout).unwrap());
+        });
+
     }
 
 
