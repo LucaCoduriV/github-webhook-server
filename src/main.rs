@@ -135,6 +135,9 @@ async fn hook(header: HeaderMap, body: String) -> Response {
                     error!("[{}][{}]{}", repo.repo, event, line);
                 }
             }
+
+            let status = child.wait().unwrap();
+            info!("[{}][{}]Finished with status {:?}", repo.repo, event, status.code());
         });
     }
 
