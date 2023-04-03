@@ -137,7 +137,13 @@ async fn hook(header: HeaderMap, body: String) -> Response {
             }
 
             let status = child.wait().unwrap();
-            info!("[{}][{}]Finished with status {:?}", repo.repo, event, status.code());
+            if status.code().is_some() {
+                info!("[{}][{}]Command finished with status {}", repo.repo, event,
+                    status.code().unwrap());
+            }else {
+                info!("[{}][{}]Command finished with error", repo.repo, event);
+            }
+
         });
     }
 
