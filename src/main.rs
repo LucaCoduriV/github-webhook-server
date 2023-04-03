@@ -3,6 +3,7 @@ mod models;
 mod cli;
 
 use std::{io, thread};
+use std::io::{BufRead, BufReader};
 use axum::{
     routing::{get, post},
     http::StatusCode,
@@ -17,7 +18,7 @@ use sha2::Sha256;
 use hmac::{Hmac, Mac};
 use once_cell::sync::{OnceCell};
 use crate::models::{Config, Repo};
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
 use clap::Parser;
 use log::{error, info, warn};
 
@@ -114,16 +115,26 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     // If there is a command to run
     if repo.command.is_some() {
         thread::spawn(move || {
-            let Ok(output) = Command::new(repo.command.as_ref().unwrap())
+            let mut child = Command::new(repo.command.as_ref().unwrap())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
                 .current_dir(&repo.working_directory)
                 .args(&repo.args)
-                .output()
-                else {
-                    eprintln!("[{}][{}]COULDN'T RUN THE COMMAND", repo.repo, event);
-                    return;
-                };
-            info!("[{}][{}]COMMAND OUTPUT: {}", repo.repo, event,
-                 String::from_utf8(output.stdout).unwrap());
+                .spawn().unwrap();
+
+            if let Some(ref mut stdout) = child.stdout {
+                for line in BufReader::new(stdout).lines() {
+                    let line = line.unwrap();
+                    info!("[{}][{}]{}", repo.repo, event, line);
+                }
+            }
+
+            if let Some(ref mut stderr) = child.stderr {
+                for line in BufReader::new(stderr).lines() {
+                    let line = line.unwrap();
+                    error!("[{}][{}]{}", repo.repo, event, line);
+                }
+            }
         });
     }
 
