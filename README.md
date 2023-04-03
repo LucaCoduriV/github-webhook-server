@@ -61,7 +61,7 @@ repo_directory = "../repo2/"
 
 ### Creating a webhook in GitHub
 See GitHub's Creating Webhooks guide. Currently, the server only supports JSON 
-payloads.
+payloads. The payload needs to be sent to `http://yourserverip:port/hook`
 
 ### Available events
 For mor details look at the Github webhook documentation
