@@ -108,8 +108,6 @@ async fn hook(header: HeaderMap, body: String) -> Response {
     if git_result.is_err() {
         error!("[{}][{}]ERROR WITH GIT: {:?}",repo.repo, event, git_result.unwrap_err());
         return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't update git repo").into_response();
-    } else {
-        info!("[{}][{}]GIT OUTPUT: {:#?}", repo.repo, event, git_result.unwrap());
     }
 
 
@@ -156,22 +154,10 @@ fn git_reset(branch: &str, repo_directory: &str) -> Result<Output, io::Error> {
 fn update_git_repo(repo: &Repo, event: &GithubEventTypes) -> Result<(), io::Error> {
     let location = &repo.repo_directory;
     let branch = &repo.branch;
-    // let backup_branch = format!("backup-{}", branch);
 
-    // backup
-    // let output = run_command("git checkout", vec![backup_branch.as_str()], location)?;
-    // println!("{}", String::from_utf8(output.stdout).unwrap());
-    // let output = run_command("git reset", vec![format!("--hard {}", branch)], location)?;
-    // println!("{}", String::from_utf8(output.stdout).unwrap());
-    // let output = run_command("git checkout", vec![branch], location)?;
-    // println!("{}", String::from_utf8(output.stdout).unwrap());
-
-    // update
     let output = git_fetch_all(location)?;
-    info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, String::from_utf8(output.stdout).unwrap
-        ());
-    // let output = run_command("git branch", vec![backup_branch.as_str()], location)?;
-    // println!("{}", String::from_utf8(output.stdout).unwrap());
+    info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, 
+        String::from_utf8(output.stdout).unwrap());
     let output = git_reset(branch, location)?;
     info!("[{}][{}]GIT RESET: {}", repo.repo, event, String::from_utf8(output.stdout).unwrap());
     Ok(())
