@@ -2,7 +2,7 @@ port = 3003
 git_directory = "C:\\Program Files\\Git\\cmd\\git.exe"
 
 [[repos]]
-repo = "LucaCoduriV/rust-webhook-server"
+repo = "LucaCoduriV/github-webhook-server"
 secret = "1234"
 branch = "main"
 repo_directory = "."
