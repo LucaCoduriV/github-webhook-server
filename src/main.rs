@@ -186,10 +186,18 @@ fn update_git_repo(repo: &Repo, event: &GithubEventTypes) -> Result<(), io::Erro
         let line = line.unwrap();
         info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, line);
     }
+    for line in output.stderr.lines() {
+        let line = line.unwrap();
+        info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, line);
+    }
     let output = git_reset(branch, location)?;
     for line in output.stdout.lines() {
         let line = line.unwrap();
         info!("[{}][{}]GIT RESET: {}", repo.repo, event, line);
+    }
+    for line in output.stderr.lines() {
+        let line = line.unwrap();
+        info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, line);
     }
     Ok(())
 }
