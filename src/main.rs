@@ -67,8 +67,17 @@ async fn root() -> &'static str {
 async fn hook(header: HeaderMap, body: String) -> Response {
     let event = header.get("X-GitHub-Event").unwrap().to_str().unwrap();
     let event = event.parse::<GithubEventTypes>().unwrap();
+    if event == GithubEventTypes::Ping {
+        return StatusCode::OK.into_response();
+    }
 
-    let body_json: serde_json::Value = serde_json::from_str(&body).unwrap();
+    let body_json: serde_json::Value = match serde_json::from_str(&body){
+        Err(e) =>{
+            error!("Couldn't read JSON body: {}", e);
+            return (StatusCode::NOT_MODIFIED, "repo is not in config file").into_response()
+        },
+        Ok(j) => j,
+    };
     let repo_full_name = body_json.get("repository").unwrap()
         .get("full_name").unwrap()
         .as_str().unwrap();
