@@ -141,7 +141,7 @@ async fn hook(header: HeaderMap, body: String) -> Response {
             if let Some(ref mut stderr) = child.stderr {
                 for line in BufReader::new(stderr).lines() {
                     let line = line.unwrap();
-                    error!("[{}][{}]{}", repo.repo, event, line);
+                    info!("[{}][{}]{}", repo.repo, event, line);
                 }
             }
 
