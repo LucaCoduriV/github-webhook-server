@@ -27,6 +27,7 @@ static USER_CONFIG: OnceCell<Config> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
+    // there is maybe a better way to do this
     if let Err(_) = std::env::var("RUST_LOG") {
         std::env::set_var("RUST_LOG", "info");
     }
@@ -39,14 +40,10 @@ async fn main() {
         .expect("Wrong config format or missing required configurations"))
         .expect("OnceCell error");
 
-    // build our application with a route
     let app = Router::new()
-        // `GET /` goes to `root`
         .route("/hook", post(hook))
         .route("/", get(root));
 
-    // run our app with hyper
-    // `axum::Server` is a re-export of `hyper::Server`
     let addr = SocketAddr::from(([0, 0, 0, 0], USER_CONFIG.get().unwrap().port));
     info!("listening on {}", addr);
     axum::Server::bind(&addr)
@@ -55,9 +52,8 @@ async fn main() {
         .unwrap();
 }
 
-// basic handler that responds with a static string
 async fn root() -> &'static str {
-    "Hello, World!2"
+    "Webhook is running on /hook"
 }
 
 async fn hook(header: HeaderMap, body: String) -> Response {
