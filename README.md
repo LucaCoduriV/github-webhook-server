@@ -2,6 +2,9 @@
   <img src="logo.png" />
 </p>
 
+This application will automatically updates local GitHub repositories and triggers a command once the update is complete. This can be extremely useful, for example, for automating deployment to a production server.
+
+
 ## ❓ How to use
 
 ```
