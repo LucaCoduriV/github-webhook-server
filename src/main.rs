@@ -33,7 +33,9 @@ static USER_CONFIG: OnceCell<Config> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
-    std::env::set_var("RUST_LOG", "info");
+    if let Err(_) = std::env::var("RUST_LOG"){
+        std::env::set_var("RUST_LOG", "info");
+    }
     pretty_env_logger::init();
 
     let args = cli::Args::parse();
