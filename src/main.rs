@@ -22,18 +22,12 @@ use std::process::{Command, Output, Stdio};
 use clap::Parser;
 use log::{error, info, warn};
 
-
-// static USER_CONFIG: Lazy<Config> = Lazy::new(|| {
-//     let config_str = std::fs::read_to_string("./config.toml").expect("No configuration file found");
-//     toml::from_str(&config_str).expect("Wrong config format")
-// });
-
 static USER_CONFIG: OnceCell<Config> = OnceCell::new();
 
 
 #[tokio::main]
 async fn main() {
-    if let Err(_) = std::env::var("RUST_LOG"){
+    if let Err(_) = std::env::var("RUST_LOG") {
         std::env::set_var("RUST_LOG", "info");
     }
     pretty_env_logger::init();
@@ -73,11 +67,11 @@ async fn hook(header: HeaderMap, body: String) -> Response {
         return StatusCode::OK.into_response();
     }
 
-    let body_json: serde_json::Value = match serde_json::from_str(&body){
-        Err(e) =>{
+    let body_json: serde_json::Value = match serde_json::from_str(&body) {
+        Err(e) => {
             error!("Couldn't read JSON body: {}", e);
-            return (StatusCode::NOT_MODIFIED, "repo is not in config file").into_response()
-        },
+            return (StatusCode::NOT_MODIFIED, "repo is not in config file").into_response();
+        }
         Ok(j) => j,
     };
     let repo_full_name = body_json.get("repository").unwrap()
@@ -151,10 +145,9 @@ async fn hook(header: HeaderMap, body: String) -> Response {
             if status.code().is_some() {
                 info!("[{}][{}]Command finished with status {}", repo.repo, event,
                     status.code().unwrap());
-            }else {
+            } else {
                 info!("[{}][{}]Command finished with error", repo.repo, event);
             }
-
         });
     }
 
@@ -193,7 +186,7 @@ fn update_git_repo(repo: &Repo, event: &GithubEventTypes) -> Result<(), io::Erro
     Ok(())
 }
 
-fn log_buffer(buf: Vec<u8>, prefix:&str){
+fn log_buffer(buf: Vec<u8>, prefix: &str) {
     for line in buf.lines() {
         let line = line.unwrap();
         info!("{}{}", prefix, line);
