@@ -184,24 +184,20 @@ fn update_git_repo(repo: &Repo, event: &GithubEventTypes) -> Result<(), io::Erro
     let branch = &repo.branch;
 
     let output = git_fetch_all(location)?;
-    for line in output.stdout.lines() {
-        let line = line.unwrap();
-        info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, line);
-    }
-    for line in output.stderr.lines() {
-        let line = line.unwrap();
-        info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, line);
-    }
+    log_buffer(output.stdout, format!("{}[{}]GIT FETCH ALL", repo.repo, event).as_str());
+    log_buffer(output.stderr, format!("{}[{}]GIT FETCH ALL", repo.repo, event).as_str());
+
     let output = git_reset(branch, location)?;
-    for line in output.stdout.lines() {
-        let line = line.unwrap();
-        info!("[{}][{}]GIT RESET: {}", repo.repo, event, line);
-    }
-    for line in output.stderr.lines() {
-        let line = line.unwrap();
-        info!("[{}][{}]GIT FETCH ALL: {}", repo.repo, event, line);
-    }
+    log_buffer(output.stdout, format!("{}[{}]GIT FETCH ALL", repo.repo, event).as_str());
+    log_buffer(output.stderr, format!("{}[{}]GIT FETCH ALL", repo.repo, event).as_str());
     Ok(())
+}
+
+fn log_buffer(buf: Vec<u8>, prefix:&str){
+    for line in buf.lines() {
+        let line = line.unwrap();
+        info!("{}{}", prefix, line);
+    }
 }
 
 fn check_signature(secret: &str, signature: &str, body: &str) -> bool {
