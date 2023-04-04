@@ -4,9 +4,10 @@ version = "1.0.0"
 edition = "2021"
 description = "This application will automatically updates local GitHub repositories and triggers a command once the update is complete. This can be extremely useful, for example, for automating deployment to a production server."
 authors = ["Luca Coduri"]
-license = "apache-2.0"
+license = "Apache-2.0"
 repository = "https://github.com/LucaCoduriV/github-webhook-server"
-
+readme = "README.md"
+keywords = ["git", "github", "CD", "CI", "server", "webhook"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
