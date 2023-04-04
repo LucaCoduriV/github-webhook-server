@@ -5,7 +5,7 @@
 ## ❓ How to use
 
 ```
-Github webhook server for CD                                                
+Github webhook server for CI/CD                                                
                                                                             
 Usage: rust-webhook-server [OPTIONS]                                    
                                                                             
